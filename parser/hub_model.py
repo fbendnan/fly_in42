@@ -3,49 +3,57 @@ from typing import Optional, Literal
 import re
 
 class HubModel(BaseModel):
-    name : str = Field(..., min_length = 1)
-    x : int = Field(...)
-    y : int = Field(...)
+    name: str = Field(..., min_length=1)
+    x: int = Field(...)
+    y: int = Field(...)
     zone: Literal["normal", "priority", "restricted", "blocked"] = Field(default='normal')
-    max_drones : int = Field(default=1)
-    color : Optional[str] = None
+    max_drones: int = Field(default=1)
+    color: Optional[str] = None
 
     @classmethod
-    @model_validator(mode="before")
-    def validate_hub(cls, string: str):
+    def validate_hub(cls, value):
         pattern = r"^(?P<name>\w+)\s+(?P<x>\d+)\s+(?P<y>\d+)(?:\s*\[(?P<options>.*?)\])?$"
+        match = re.match(pattern, value)
+        if not match:
+            raise ValueError(f"Invalid hub format: {value}")
 
-        matchs = re.match(pattern, string)
-        if not matchs:
-            raise ValueError(f"Invalid hub format: {string}")
-        if matchs:
-            name = matchs.group('name')
-            x = int(matchs.group('x'))
-            y = int(matchs.group('y'))
-            options = matchs.group('options')
+        name = match.group('name')
+        x = int(match.group('x'))
+        y = int(match.group('y'))
+        options_str = match.group('options')
+
         options_dict = {}
-        if options:
-            pairs = re.findall(r'(\w+)=([^\s\]]+)', options)
-            for key, value in pairs:
+        if options_str:
+            pairs = re.findall(r'(\w+)=([^\s\]]+)', options_str)
+            for key, val in pairs:
                 if key in options_dict:
-                    raise ValueError(f"Duplicate key {key}")
-                options_dict[key] = value
+                    raise ValueError(f"Duplicate metadata key: {key}")
+                options_dict[key] = val
+        
+        allowed_keys = {"zone", "max_drones", "color"}
+        for key in options_dict:
+            if key not in allowed_keys:
+                raise ValueError(f"Unknown metadata key '{key}' in hub line. Allowed: {allowed_keys}")
+
         zone_type = options_dict.get('zone', 'normal')
         if zone_type not in ["normal", "priority", "restricted", "blocked"]:
             raise ValueError(f"Invalid zone type: {zone_type}")
-        
-        max_drones = options_dict.get('max_drones', 1)
-        if int(max_drones) < 1:
-            raise ValueError(f"Invalid max_drones: {max_drones}")
 
-        color_val = options_dict.get('color')
-        data = {
+        max_drones_val = options_dict.get('max_drones', 1)
+        try:
+            max_drones_int = int(max_drones_val)
+        except ValueError:
+            raise ValueError(f"max_drones must be an integer, got '{max_drones_val}'")
+        if max_drones_int < 1:
+            raise ValueError(f"max_drones must be positive, got {max_drones_int}")
+
+        color_val = options_dict.get('color')  # None if absent
+
+        return {
             "name": name,
             "x": x,
             "y": y,
             "zone": zone_type,
-            "max_drones": int(max_drones),
+            "max_drones": max_drones_int,
             "color": color_val,
         }
-
-        return data
