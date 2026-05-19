@@ -1,5 +1,5 @@
 from zone import Zone
-from parser.parsing import ParseConfig
+from parse.parsing import ParseConfig
 
 
 class Graph:
@@ -10,6 +10,11 @@ class Graph:
 
     def add_zone(self):
         self.data = ParseConfig(self.file_name)
-        
-        self.zones.append(Zone(self.data.start_hub.name, self.data.start_hub.x, self.data.start_hub.y))
-        # print(self.data.start_hub["name"])
+        self.data.parser()
+        self.zones.append(self.data.start_hub)
+        self.zones.append(self.data.end_hub)
+        for hub in self.data.hubs:
+            self.zones.append(hub)
+
+
+#if

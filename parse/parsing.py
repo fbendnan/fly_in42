@@ -1,5 +1,5 @@
-from parser.hub_model import HubModel
-from parser.connection import Connection
+from parse.hub_model import HubModel
+from parse.connection import Connection
 
 class ParseConfig:
     def __init__(self, file_name: str):
@@ -47,6 +47,7 @@ class ParseConfig:
                     validated_data = HubModel.validate_hub(value)
                     self.hubs.append(HubModel(**validated_data))
                 elif key == "connection":
+
                     validated_data = Connection.validate_connection(value)
                     self.connections.append(Connection(**validated_data))
                 else:

@@ -7,7 +7,6 @@ class Connection(BaseModel):
     max_link_capacity: int = Field(default=1)
 
     @classmethod
-    @model_validator(mode='before')
     def validate_connection(cls, value):
         pattern = r"^(?P<zone1>\w+)\s*-\s*(?P<zone2>\w+)(?:\s*\[(?P<options>.*?)\])?$"
         match = re.match(pattern, value)
@@ -26,7 +25,6 @@ class Connection(BaseModel):
                     raise ValueError(f"Duplicate metadata key: {key}")
                 options_dict[key] = val
 
-        # Only allowed key is max_link_capacity
         for key in options_dict:
             if key != "max_link_capacity":
                 raise ValueError(f"Unknown metadata key '{key}' in connection. Only 'max_link_capacity' allowed.")
@@ -38,7 +36,6 @@ class Connection(BaseModel):
             raise ValueError(f"max_link_capacity must be an integer, got '{max_cap}'")
         if max_cap_int < 1:
             raise ValueError(f"max_link_capacity must be positive, got {max_cap_int}")
-
         return {
             "zone1": zone1,
             "zone2": zone2,
