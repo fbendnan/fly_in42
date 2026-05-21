@@ -2,7 +2,6 @@ import sys
 from graph import Graph
 from parse.parsing import ParseConfig
 
-
 # try:
 if len(sys.argv) != 2:
     raise ValueError("You should enter: python3 fly_in.py config.txt")
@@ -11,7 +10,7 @@ CONFIG_FILE = sys.argv[1]
 # parser.parser()
 
 g = Graph(CONFIG_FILE)
-g.add_zone()
+g.build()
 
 # print(parser.nb_drones)
 # print(parser.start_hub.name, parser.start_hub.x, parser.start_hub.y)
@@ -19,7 +18,6 @@ g.add_zone()
 #     print(hub.name, hub.zone, hub.x, hub.y, hub.color)
 # for conn in parser.connections:
 #     print(conn.zone1, conn.zone2, conn.max_link_capacity)
- 
+
 # except (Exception, KeyboardInterrupt) as e:
 #     print(e)
-

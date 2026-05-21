@@ -3,4 +3,5 @@ class Zone():
         self.name = name
         self.x = x
         self.y = y
-        
+        self.neighbors = []
+        self.is_visited = False
