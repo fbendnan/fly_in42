@@ -12,7 +12,7 @@ CONFIG_FILE = sys.argv[1]
 g = Graph(CONFIG_FILE)
 g.build()
 g.add_zone_neighbors()
-g.djikstra()
+print("path = "  , g.djikstra())
 
 # print(parser.nb_drones)
 # print(parser.start_hub.name, parser.start_hub.x, parser.start_hub.y)
