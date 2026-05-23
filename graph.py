@@ -1,5 +1,6 @@
 from zone import Zone
 from parse.parsing import ParseConfig
+import heapq
 
 
 class Graph:
@@ -26,32 +27,47 @@ class Graph:
             z2.neighbors.append((z1, conn))
 
     def djikstra(self):
+        dist = {name: float('inf') for name in self.zones_dict.keys()}
+        dist[self.data.start_hub.name] = 0
+        prev = {}
+        pq = [(0, self.data.start_hub.name)]
+
+        while pq:
+            current_cost, current_name = heapq.heappop(pq)
+            print(current_name)
+
+            if current_name == self.data.end_hub.name:
+                break
+
+            if current_cost > dist[current_name]:
+                continue
+
+            current_zone = self.zones_dict[current_name]
+
+            for neighbor_zone, conn in current_zone.neighbors:
+                if neighbor_zone.zone == 'blocked':
+                    continue
+
+                if neighbor_zone.zone == 'priority':
+                    cost = 1
+                elif neighbor_zone.zone == 'normal':
+                    cost = 2
+                else:
+                    cost = 3
+                new_cost = current_cost + cost
+
+                if new_cost < dist[neighbor_zone.name]:
+                    dist[neighbor_zone.name] = new_cost
+                    prev[neighbor_zone.name] = current_zone
+                    heapq.heappush(pq, (new_cost, neighbor_zone.name))
+
         path = []
-        total_cost = 0
-        current = self.zones_dict.get("start")
-        path.append(current.name)
-        print(current.neighbors)
-        z, c = current.neighbors[0]
-        choosen = self.zones_dict.get(z.name)
-        while(current.name != self.data.end_hub.name):
-            for x, y in current.neighbors:
-                if x.zone == 'perfect':
-                    choosen = self.zones_dict.get(x.name)
-                    total_cost += 1
+        curr = self.zones_dict.get(self.data.end_hub.name)
+        while curr is not None:
+            path.append(curr.name)
+            curr = prev.get(curr.name)
 
-                elif x.zone == 'normal' and choosen.zone != 'perfect':
-                    choosen = self.zones_dict.get(x.name)
-                    total_cost += 1
-
-                elif x.zone == 'restricted' and choosen.zone != 'perfect' and choosen.zone != 'normal':
-                    choosen = self.zones_dict.get(x.name)
-                    total_cost += 2
-                
-                elif x.zone == 'blocked':
-                    choosen = None
-            current  = choosen
-            path.append(current.name)
-
+        path.reverse()
         return path
 
             
