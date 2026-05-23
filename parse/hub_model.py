@@ -9,7 +9,7 @@ class HubModel(BaseModel):
     zone: Literal["normal", "priority", "restricted", "blocked"] = Field(default='normal')
     max_drones: int = Field(default=1)
     color: Optional[str] = None
-    neighbors = []
+    neighbors: list = Field(default_factory=list)
 
     @classmethod
     def validate_hub(cls, value):

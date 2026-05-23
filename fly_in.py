@@ -1,6 +1,6 @@
 import sys
 from graph import Graph
-from parse.parsing import ParseConfig
+# from parse.parsing import ParseConfig
 
 # try:
 if len(sys.argv) != 2:
@@ -11,6 +11,8 @@ CONFIG_FILE = sys.argv[1]
 
 g = Graph(CONFIG_FILE)
 g.build()
+g.add_zone_neighbors()
+g.djikstra()
 
 # print(parser.nb_drones)
 # print(parser.start_hub.name, parser.start_hub.x, parser.start_hub.y)

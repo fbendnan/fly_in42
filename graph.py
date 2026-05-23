@@ -12,6 +12,7 @@ class Graph:
         self.data = ParseConfig(self.file_name)
         self.data.parser()
         self.zones_dict[self.data.start_hub.name] = self.data.start_hub
+        print("this id data from buikd fiun::", self.data)
         self.zones_dict[self.data.end_hub.name] = self.data.end_hub
         for hub in self.data.hubs:
             self.zones_dict[hub.name] = hub
@@ -24,7 +25,10 @@ class Graph:
             z1.neighbors.append((z2, conn))
             z2.neighbors.append((z1, conn))
 
-    def djikstra(self): ...
+    def djikstra(self):
+        current = self.zones_dict.get("start")
+        # print(self.zones_dict)
+        print(current)
 
 
 # 1-  every zone should know their neighbors
