@@ -13,7 +13,7 @@ class Graph:
         self.data = ParseConfig(self.file_name)
         self.data.parser()
         self.zones_dict[self.data.start_hub.name] = self.data.start_hub
-        print("this is data from build fun :", self.data.start_hub)
+        # print("this is data from build fun :", self.data.start_hub)
         self.zones_dict[self.data.end_hub.name] = self.data.end_hub
         for hub in self.data.hubs:
             self.zones_dict[hub.name] = hub
@@ -34,7 +34,7 @@ class Graph:
 
         while pq:
             current_cost, current_name = heapq.heappop(pq)
-            print(current_name)
+            print(current_name, current_cost)
 
             if current_name == self.data.end_hub.name:
                 break
@@ -49,18 +49,20 @@ class Graph:
                     continue
 
                 if neighbor_zone.zone == 'priority':
+                    cost = 0.9
+                elif neighbor_zone.zone =='normal' :
                     cost = 1
-                elif neighbor_zone.zone == 'normal':
+                else :
                     cost = 2
-                else:
-                    cost = 3
                 new_cost = current_cost + cost
+                print(f"the zone neighbor = {neighbor_zone.name} and new_cost =  {new_cost}, neighbor cost = {dist[neighbor_zone.name]}")
 
                 if new_cost < dist[neighbor_zone.name]:
+                    print("enter")
                     dist[neighbor_zone.name] = new_cost
                     prev[neighbor_zone.name] = current_zone
+                    # print(current_zone.name)
                     heapq.heappush(pq, (new_cost, neighbor_zone.name))
-
         path = []
         curr = self.zones_dict.get(self.data.end_hub.name)
         while curr is not None:
