@@ -1,5 +1,9 @@
 import sys
-from graph import Graph
+from graph import GraphBuilder
+# from simulation import Simulation
+from display import display
+from algo.PathFinder import PathFinder
+
 # from parse.parsing import ParseConfig
 
 # try:
@@ -9,10 +13,26 @@ CONFIG_FILE = sys.argv[1]
 # parser = ParseConfig(CONFIG_FILE)
 # parser.parser()
 
-g = Graph(CONFIG_FILE)
+g = GraphBuilder(CONFIG_FILE)
 g.build()
 g.add_zone_neighbors()
-print("path = "  , g.djikstra())
+g.add_costs()
+
+start = g.data.start_hub.name
+end = g.data.end_hub.name
+# sim = Simulation(g, g.data.nb_drones)
+# sim.run_simulation()
+path_finder = PathFinder(g)
+path = path_finder.dijkstra()
+
+view = display(g)
+view.run(path)
+
+
+
+
+# print("path = ", p.dijkstra())
+
 
 # print(parser.nb_drones)
 # print(parser.start_hub.name, parser.start_hub.x, parser.start_hub.y)

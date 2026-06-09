@@ -1,5 +1,6 @@
-from parse.hub_model import HubModel
+from parse.hub_model import Zone
 from parse.connection import Connection
+
 
 class ParseConfig:
     def __init__(self, file_name: str):
@@ -17,10 +18,10 @@ class ParseConfig:
         line_no = 0
         for raw_line in lines:
             stripped = raw_line.strip()
-            if not stripped or stripped.startswith('#'):
+            if not stripped or stripped.startswith("#"):
                 continue
             line_no += 1
-            parts = stripped.split(':', 1)
+            parts = stripped.split(":", 1)
             if len(parts) != 2:
                 raise ValueError(f"Line {line_no}: Missing colon separator")
             key = parts[0].strip()
@@ -31,21 +32,25 @@ class ParseConfig:
                 try:
                     self.nb_drones = int(value)
                 except ValueError:
-                    raise ValueError(f"Line {line_no}: nb_drones must be integer, got '{value}'")
+                    raise ValueError(
+                        f"Line {line_no}: nb_drones must be integer, got '{value}'"
+                    )
                 if self.nb_drones < 1:
-                    raise ValueError(f"Line {line_no}: nb_drones must be ≥ 1, got {self.nb_drones}")
+                    raise ValueError(
+                        f"Line {line_no}: nb_drones must be ≥ 1, got {self.nb_drones}"
+                    )
                 continue
 
             try:
                 if key == "start_hub":
-                    validated_data = HubModel.validate_hub(value)
-                    self.start_hub = HubModel(**validated_data)
+                    validated_data = Zone.validate_hub(value)
+                    self.start_hub = Zone(**validated_data)
                 elif key == "end_hub":
-                    validated_data = HubModel.validate_hub(value)
-                    self.end_hub = HubModel(**validated_data)
+                    validated_data = Zone.validate_hub(value)
+                    self.end_hub = Zone(**validated_data)
                 elif key == "hub":
-                    validated_data = HubModel.validate_hub(value)
-                    self.hubs.append(HubModel(**validated_data))
+                    validated_data = Zone.validate_hub(value)
+                    self.hubs.append(Zone(**validated_data))
                 elif key == "connection":
 
                     validated_data = Connection.validate_connection(value)
