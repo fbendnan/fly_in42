@@ -18,6 +18,7 @@ g.build()
 g.add_zone_neighbors()
 g.add_costs()
 
+
 start = g.data.start_hub.name
 end = g.data.end_hub.name
 # sim = Simulation(g, g.data.nb_drones)
@@ -25,9 +26,9 @@ end = g.data.end_hub.name
 path_finder = PathFinder(g)
 path = path_finder.dijkstra()
 
+g.create_drones(path)
 view = display(g)
 view.run(path)
-
 
 
 

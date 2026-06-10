@@ -1,12 +1,13 @@
 from parse.parsing import ParseConfig
 from algo.PathFinder import PathFinder
-
+from dron import Drone
 
 class GraphBuilder:
     def __init__(self, file_name):
         self.data = None
         self.zones_dict = {}
         self.file_name = file_name
+        self.drones = []
 
     def build(self):
         self.data = ParseConfig(self.file_name)
@@ -32,6 +33,15 @@ class GraphBuilder:
                 zone.cost = 2
             else:
                 zone.cost = 1
+
+    def create_drones(self, best_path):
+        """Assign a shortest path to every drone (same path for all, but simulation works with any path)."""
+        if not best_path:
+            raise ValueError("No path from start to end zone")
+        for i in range(1, self.data.nb_drones + 1):
+            drone = Drone(i, self.data.start_hub)
+            drone.path = best_path.copy()
+            self.drones.append(drone)
 
 
 
