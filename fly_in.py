@@ -1,8 +1,8 @@
 import sys
 from graph import GraphBuilder
-# from simulation import Simulation
-from display import display
-from algo.PathFinder import PathFinder
+from sim import Simulation
+from display import Display
+# from algo.PathFinder import PathFinder
 
 # from parse.parsing import ParseConfig
 
@@ -21,14 +21,16 @@ g.add_costs()
 
 start = g.data.start_hub.name
 end = g.data.end_hub.name
-# sim = Simulation(g, g.data.nb_drones)
-# sim.run_simulation()
-path_finder = PathFinder(g)
-path = path_finder.dijkstra()
 
-g.create_drones(path)
-view = display(g)
-view.run(path)
+# path_finder = PathFinder(g)
+# path = path_finder.dijkstra()
+
+# Create simulation
+sim = Simulation(g, g.data.nb_drones)
+
+# Create display and start animation
+view = Display(sim)
+view.start(delay_ms=400)
 
 
 

@@ -23,7 +23,7 @@ class PathFinder:
         while pq:
             current_cost, neg_priority, current_name = heapq.heappop(pq)
             current_priority = -neg_priority
-            print(current_priority)
+            # print(current_priority)
             if current_name == end:
                 break
 
