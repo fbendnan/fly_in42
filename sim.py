@@ -44,7 +44,7 @@ class Simulation:
         turn_moves = []
         proposals = [] #(drone, from_z, to_z, conn)
         for drone in self.drones:
-            if drone.state == "delivered":
+            if drone.state != "in_zone":
                 continue
             if len(drone.path) <= 1:
                 if drone.current_zone == self.end:
@@ -62,14 +62,14 @@ class Simulation:
         for p in proposals:
             to_zone = p[2]
             proposals_by_dest[to_zone].append(p)
-        
+
         accepted_proposals = []
         accepted_connections = defaultdict(int) #to check the number of drones that can travel through this conn
     
         leaving_zone_count = defaultdict(int)
         for (drone, from_z, to_z, conn) in proposals:
             leaving_zone_count[from_z] += 1
-        
+
         for to_zone, plist in proposals_by_dest.items():
             if to_z == self.end:
                 for p in plist:
@@ -80,7 +80,7 @@ class Simulation:
                     accepted_proposals.append(p)
                     accepted_connections[connection] += 1
                 continue
-            
+
             nb_drones_occup_to_z = len(self.zone_occupancy[to_zone])
             nb_drones_leaving_to_z = leaving_zone_count[to_zone]
             available_place_at_to_z = self.zones[to_zone].max_drones - (nb_drones_occup_to_z - nb_drones_leaving_to_z)
@@ -98,7 +98,6 @@ class Simulation:
                 accepted_proposals.append(p)
                 accepted_connections[connection] += 1
                 accepted += 1
-                # print(drone.id)
 
         for (drone, from_z, to_z, conn) in accepted_proposals:
             self.zone_occupancy[from_z].remove(drone.id)

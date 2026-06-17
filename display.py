@@ -84,6 +84,9 @@ class Display:
                 zone_drones[self.sim.end].append(drone)
             elif drone.state == "in_zone":
                 zone_drones[drone.current_zone].append(drone)
+            ## i am gonna add this to draw restricted on conn
+            # elif drone.state == "in_conn":
+                # conn_drones[drone.current_zone].append(drone)
         for zone_name, drones in zone_drones.items():
             if not drones:
                 continue
@@ -99,6 +102,7 @@ class Display:
                 dron_id_text = self.font_small.render(str(drone.id), True, (120, 80, 90))
                 dron_id_rect = dron_id_text.get_rect(center=(cx + off_x, cy + off_y))
                 screen.blit(dron_id_text, dron_id_rect)
+        ##i am gonna add a for loop to check the conndronesand add a logic to draw dron in the middle of conn
 
     def start(self, delay_ms=4000):
         pygame.init()
