@@ -5,4 +5,5 @@ class Drone:
         self.id = drone_id
         self.path: List[str] = []
         self.current_zone: any = start_zone
-        self.state: str = "in_zone" #("in_conn", "delivered")
+        self.state: str = "in_zone" #("in_transit", "delivered")
+        self.target_zone: str = None

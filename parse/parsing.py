@@ -17,11 +17,11 @@ class ParseConfig:
 
         line_no = 0
         for raw_line in lines:
-            stripped = raw_line.strip()
-            if not stripped or stripped.startswith("#"):
+            stripped_line = raw_line.strip()
+            if not stripped_line or stripped_line.startswith("#"):
                 continue
             line_no += 1
-            parts = stripped.split(":", 1)
+            parts = stripped_line.split(":", 1)
             if len(parts) != 2:
                 raise ValueError(f"Line {line_no}: Missing colon separator")
             key = parts[0].strip()

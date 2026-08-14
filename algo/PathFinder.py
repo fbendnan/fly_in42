@@ -6,65 +6,147 @@ class PathFinder:
         self.paths = []
         self.blocked_edges = set()
     
+    def count_path_cost(self, path):
+        """Total cost of a path (sum of movement costs to enter each zone)."""
+        if len(path) <= 1:
+            return 0
+        total = 0
+        for i in range(1, len(path)):
+            zone_name = path[i]
+            zone = self.graph.zones_dict[zone_name]
+            if zone.zone == "restricted":
+                total += 2
+            else:
+                total += 1
+        return total
 
-    def dijkstra(self):
-        start = self.graph.data.start_hub.name
-        end = self.graph.data.end_hub.name
+    def k_shortest_paths(self, start, end, K=5):
+        """
+        Returns up to K shortest paths from start to end, ordered by total cost.
+        """        
+        def dijkstra_single(source, target, blocked_edges=None):
+            """
+            Run Dijkstra from source to target.
+            blocked_edges: set of (u, v) edges to exclude.
+            Returns (path, cost) or (None, inf) if no path.
+            """
+            if blocked_edges is None:
+                blocked_edges = set()
 
-        dist = {name: float("inf") for name in self.graph.zones_dict}
-        dist[start] = 0
+            dist = {name: float('inf') for name in self.graph.zones_dict}
+            parent = {name: None for name in self.graph.zones_dict}
+            dist[source] = 0
+            pq = [(0, source)]
 
-        best_priority = {name: -1 for name in self.graph.zones_dict}
-        best_priority[start] = 0
-
-        prev = {}
-        pq = [(0, 0, start)]  # (cost, -priority, name)
-
-        while pq:
-            current_cost, neg_priority, current_name = heapq.heappop(pq)
-            current_priority = -neg_priority
-            # print(current_priority)
-            if current_name == end:
-                break
-
-            if current_cost > dist[current_name] or (
-                current_cost == dist[current_name]
-                and current_priority < best_priority[current_name]
-            ):
-                continue
-
-            current_zone = self.graph.zones_dict[current_name]
-
-            for neighbor_zone, conn in current_zone.neighbors:
-                if neighbor_zone.zone == "blocked":
+            while pq:
+                current_cost, current_name = heapq.heappop(pq)
+                if current_cost > dist[current_name]:
                     continue
+                if current_name == target:
+                    break
+                current_zone = self.graph.zones_dict[current_name]
+                for neighbor_zone, conn in current_zone.neighbors:
+                    if neighbor_zone.zone == "blocked":
+                        continue
+                    if (current_name, neighbor_zone.name) in blocked_edges:
+                        continue
+                    move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                    new_cost = current_cost + move_cost
+                    if new_cost < dist[neighbor_zone.name]:
+                        dist[neighbor_zone.name] = new_cost
+                        parent[neighbor_zone.name] = current_name
+                        heapq.heappush(pq, (new_cost, neighbor_zone.name))
 
-                if neighbor_zone.zone == "restricted":
-                    move_cost = 2
-                else:
-                    move_cost = 1
+            if dist[target] == float('inf'):
+                return None, float('inf')
 
-                new_cost = current_cost + move_cost
+            path = []
+            cur = target
+            while cur is not None:
+                path.append(cur)
+                cur = parent[cur]
+            path.reverse()
+            return path, dist[target]
 
-                new_priority = current_priority + (
-                    1 if neighbor_zone.zone == "priority" else 0
+        final_paths = []
+        candidate_paths = []
+
+        first_path, first_cost = dijkstra_single(start, end)
+        if not first_path:
+            return []
+
+        final_paths.append(first_path)
+
+        for k in range(1, K):
+            last_path = final_paths[-1]
+            for i in range(len(last_path) - 1):
+                spur_node = last_path[i]
+                root_path = last_path[:i+1]
+
+                blocked_edges = set()
+                for path in final_paths:
+                    if len(path) > i and path[:i+1] == root_path:
+                        blocked_edges.add((path[i], path[i+1]))
+
+                def dijkstra_with_blocked_nodes(source, target, blocked_edges, blocked_nodes):
+                    """
+                    Dijkstra that avoids blocked_edges and blocked_nodes.
+                    blocked_nodes: set of node names that cannot be entered (except source).
+                    """
+                    dist = {name: float('inf') for name in self.graph.zones_dict}
+                    parent = {name: None for name in self.graph.zones_dict}
+                    dist[source] = 0
+                    pq = [(0, source)]
+
+                    while pq:
+                        current_cost, current_name = heapq.heappop(pq)
+                        if current_cost > dist[current_name]:
+                            continue
+                        if current_name == target:
+                            break
+                        current_zone = self.graph.zones_dict[current_name]
+                        for neighbor_zone, conn in current_zone.neighbors:
+                            if neighbor_zone.zone == "blocked":
+                                continue
+                            if (current_name, neighbor_zone.name) in blocked_edges:
+                                continue
+                            if neighbor_zone.name in blocked_nodes:
+                                continue
+                            move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                            new_cost = current_cost + move_cost
+                            if new_cost < dist[neighbor_zone.name]:
+                                dist[neighbor_zone.name] = new_cost
+                                parent[neighbor_zone.name] = current_name
+                                heapq.heappush(pq, (new_cost, neighbor_zone.name))
+
+                    if dist[target] == float('inf'):
+                        return None, float('inf')
+
+                    path = []
+                    cur = target
+                    while cur is not None:
+                        path.append(cur)
+                        cur = parent[cur]
+                    path.reverse()
+                    return path, dist[target]
+
+                blocked_nodes = set(root_path[:-1])
+
+                spur_path, spur_cost = dijkstra_with_blocked_nodes(
+                    spur_node, end, blocked_edges, blocked_nodes
                 )
 
-                if new_cost < dist[neighbor_zone.name] or (
-                    new_cost == dist[neighbor_zone.name]
-                    and new_priority > best_priority[neighbor_zone.name]
-                ):
-                    dist[neighbor_zone.name] = new_cost
-                    best_priority[neighbor_zone.name] = new_priority
-                    prev[neighbor_zone.name] = current_zone
-                    heapq.heappush(pq, (new_cost, -new_priority, neighbor_zone.name))
-        
-                
-        path = []
-        curr = self.graph.zones_dict.get(end)
-        while curr is not None:
-            path.append(curr.name)
-            curr = prev.get(curr.name)
-        path.reverse()
+                if spur_path is not None:
+                    total_path = root_path[:-1] + spur_path
+                    total_cost = spur_cost + self.count_path_cost(root_path[:-1])
+                    total_cost = self.count_path_cost(total_path)
+                    if total_path not in [p for p in final_paths] and total_path not in [p for (c,p) in candidate_paths]:
+                        heapq.heappush(candidate_paths, (total_cost, total_path))
 
-        return path if path and path[0] == start else []
+            if not candidate_paths:
+                break
+
+            lowest_cost, best_path = heapq.heappop(candidate_paths)
+            final_paths.append(best_path)
+
+        return final_paths[:2]

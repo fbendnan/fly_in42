@@ -2,8 +2,8 @@ import pygame
 from collections import defaultdict
 import math
 
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 600
+SCREEN_WIDTH = 1500
+SCREEN_HEIGHT = 900
 MARGIN = 80
 ZONE_RADIUS = 40
 DRONE_SIZE = 34
@@ -79,14 +79,14 @@ class Display:
         if self.drone_img is None:
             return
         zone_drones = defaultdict(list)
+        in_transit_drones = []
         for drone in self.sim.drones:
             if drone.state == "delivered":
                 zone_drones[self.sim.end].append(drone)
             elif drone.state == "in_zone":
                 zone_drones[drone.current_zone].append(drone)
-            ## i am gonna add this to draw restricted on conn
-            # elif drone.state == "in_conn":
-                # conn_drones[drone.current_zone].append(drone)
+            elif drone.state == "in_transit":
+                in_transit_drones.append(drone)
         for zone_name, drones in zone_drones.items():
             if not drones:
                 continue
@@ -103,15 +103,28 @@ class Display:
                 dron_id_rect = dron_id_text.get_rect(center=(cx + off_x, cy + off_y))
                 screen.blit(dron_id_text, dron_id_rect)
         ##i am gonna add a for loop to check the conndronesand add a logic to draw dron in the middle of conn
+        for drone in in_transit_drones:
+            from_zone = self.zones[drone.current_zone]
+            to_zone = self.zones[drone.target_zone]
+            start = self._to_screen(from_zone.x, from_zone.y)
+            end = self._to_screen(to_zone.x, to_zone.y)
+            t = 0.5
+            mx = start[0] + t * (end[0] - start[0])
+            my = start[1] + t * (end[1] - start[1])
+            pos = (int(mx) - DRONE_SIZE//2, int(my) - DRONE_SIZE//2)
+            screen.blit(self.drone_img, pos)
+            dron_id_text = self.font_small.render(str(drone.id), True, (255, 255, 255))
+            dron_id_rect = dron_id_text.get_rect(center=(int(mx), int(my)))
+            screen.blit(dron_id_text, dron_id_rect)
 
     def start(self, delay_ms=4000):
         pygame.init()
-        self.font_zone = pygame.font.Font(None, 20)#for zone name size
-        self.font_small = pygame.font.Font(None, 14)#for extra info like max capp ....etc
+        self.font_zone = pygame.font.Font(None, 20)
+        self.font_small = pygame.font.Font(None, 14)
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Fly-in")
         try:
-            raw = pygame.image.load('tl.png').convert_alpha()
+            raw = pygame.image.load('tll.png').convert_alpha()
             self.drone_img = pygame.transform.smoothscale(raw, (DRONE_SIZE, DRONE_SIZE))
         except:
             self.drone_img = pygame.Surface((DRONE_SIZE, DRONE_SIZE), pygame.SRCALPHA)

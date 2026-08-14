@@ -31,7 +31,12 @@ class Zone(BaseModel):
 
         options_dict = {}
         if options_str:
-            pairs = re.findall(r"(\w+)=([^\s\]]+)", options_str)
+            #Handel if something doesn't have = 
+            pairs = re.findall(r"(\w+)\s*=\s*([^\s\]]+)", options_str)
+            remaining = re.sub(r"\w+\s*=\s*[^\s\]]+", "", options_str)
+            remaining = remaining.strip()
+            if remaining:
+                raise ValueError(f"Invalid option syntax: {remaining}")
             for key, val in pairs:
                 if key in options_dict:
                     raise ValueError(f"Duplicate metadata key: {key}")

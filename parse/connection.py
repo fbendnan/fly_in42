@@ -5,6 +5,8 @@ class Connection(BaseModel):
     zone1: str = Field(..., min_length=1)
     zone2: str = Field(..., min_length=1)
     max_link_capacity: int = Field(default=1)
+    occupency: int = Field(default=0)
+
 
     @classmethod
     def validate_connection(cls, value):
@@ -12,14 +14,17 @@ class Connection(BaseModel):
         match = re.match(pattern, value)
         if not match:
             raise ValueError(f"Invalid connection format: {value}")
-
         zone1 = match.group('zone1')
         zone2 = match.group('zone2')
         options_str = match.group('options')
 
         options_dict = {}
         if options_str:
-            pairs = re.findall(r'(\w+)=([^\s\]]+)', options_str)
+            pairs = re.findall(r'(\w+)\s*=\s*([^\s\]]+)', options_str)
+            remaining = re.sub(r"\w+\s*=\s*[^\s\]]+", "", options_str)
+            remaining = remaining.strip()
+            if remaining:
+                raise ValueError(f"Invalid option syntax: {remaining}")
             for key, val in pairs:
                 if key in options_dict:
                     raise ValueError(f"Duplicate metadata key: {key}")
