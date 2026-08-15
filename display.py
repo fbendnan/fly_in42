@@ -9,13 +9,23 @@ ZONE_RADIUS = 40
 DRONE_SIZE = 34
 
 COLOR_MAP = {
-    "red": (200, 50, 50), "green": (50, 200, 50), "blue": (50, 50, 200),
-    "yellow": (220, 220, 0), "black": (30, 30, 30), "white": (240, 240, 240),
-    "gray": (120, 120, 120), "purple": (160, 50, 160), "orange": (240, 140, 0),
-    "cyan": (0, 200, 200), "brown": (150, 75, 0), "lime": (100, 200, 0),
-    "magenta": (200, 0, 200), "gold": (200, 170, 0)
+    "red": (200, 50, 50),
+    "green": (50, 200, 50),
+    "blue": (50, 50, 200),
+    "yellow": (220, 220, 0),
+    "black": (30, 30, 30),
+    "white": (240, 240, 240),
+    "gray": (120, 120, 120),
+    "purple": (160, 50, 160),
+    "orange": (240, 140, 0),
+    "cyan": (0, 200, 200),
+    "brown": (150, 75, 0),
+    "lime": (100, 200, 0),
+    "magenta": (200, 0, 200),
+    "gold": (200, 170, 0),
 }
 DEFAULT_ZONE_COLOR = (180, 180, 180)
+
 
 class Display:
     def __init__(self, simulation):
@@ -35,8 +45,12 @@ class Display:
         self.font_small = None
 
     def _to_screen(self, x, y):
-        sx = MARGIN + (x - self.min_x) * (SCREEN_WIDTH - 2 * MARGIN) / (self.max_x - self.min_x)
-        sy = MARGIN + (y - self.min_y) * (SCREEN_HEIGHT - 2 * MARGIN) / (self.max_y - self.min_y)
+        sx = MARGIN + (x - self.min_x) * (SCREEN_WIDTH - 2 * MARGIN) / (
+            self.max_x - self.min_x
+        )
+        sy = MARGIN + (y - self.min_y) * (SCREEN_HEIGHT - 2 * MARGIN) / (
+            self.max_y - self.min_y
+        )
         return int(sx), int(sy)
 
     def draw_connections(self, screen):
@@ -51,16 +65,16 @@ class Display:
                 end = self._to_screen(neighbor.x, neighbor.y)
                 cap = conn.max_link_capacity
                 pygame.draw.line(screen, (100, 100, 100), start, end)
-                mx = (start[0] + end[0]) // 2 
+                mx = (start[0] + end[0]) // 2
                 my = (start[1] + end[1]) // 2 - 10
                 cap_text = self.font_small.render(str(cap), True, (90, 90, 180))
-                screen.blit(cap_text, (mx  , my))
+                screen.blit(cap_text, (mx, my))
 
     def draw_zones(self, screen):
         for name, zone in self.zones.items():
             color = COLOR_MAP.get(zone.color, DEFAULT_ZONE_COLOR)
             cx, cy = self._to_screen(zone.x, zone.y)
-            pygame.draw.circle(screen, (0, 0, 0), (cx+2, cy+2), ZONE_RADIUS, 0)
+            pygame.draw.circle(screen, (0, 0, 0), (cx + 2, cy + 2), ZONE_RADIUS, 0)
             pygame.draw.circle(screen, color, (cx, cy), ZONE_RADIUS)
             pygame.draw.circle(screen, (0, 0, 0), (cx, cy), ZONE_RADIUS, 1)
             name_text = self.font_zone.render(name, True, (0, 0, 0))
@@ -71,7 +85,9 @@ class Display:
             name_rect = name_text.get_rect(center=(cx, cy - 5))
             screen.blit(name_text, name_rect)
 
-            cap_text = self.font_small.render(f"max:{zone.max_drones}", True, (80, 80, 80))
+            cap_text = self.font_small.render(
+                f"max:{zone.max_drones}", True, (80, 80, 80)
+            )
             cap_rect = cap_text.get_rect(center=(cx, cy + ZONE_RADIUS - 12))
             screen.blit(cap_text, cap_rect)
 
@@ -97,9 +113,11 @@ class Display:
                 angle = 2 * math.pi * idx / total
                 off_x = int(15 * math.cos(angle))
                 off_y = int(15 * math.sin(angle))
-                pos = (cx + off_x - DRONE_SIZE//2, cy + off_y - DRONE_SIZE//2)
+                pos = (cx + off_x - DRONE_SIZE // 2, cy + off_y - DRONE_SIZE // 2)
                 screen.blit(self.drone_img, pos)
-                dron_id_text = self.font_small.render(str(drone.id), True, (120, 80, 90))
+                dron_id_text = self.font_small.render(
+                    str(drone.id), True, (120, 80, 90)
+                )
                 dron_id_rect = dron_id_text.get_rect(center=(cx + off_x, cy + off_y))
                 screen.blit(dron_id_text, dron_id_rect)
         ##i am gonna add a for loop to check the conndronesand add a logic to draw dron in the middle of conn
@@ -111,24 +129,29 @@ class Display:
             t = 0.5
             mx = start[0] + t * (end[0] - start[0])
             my = start[1] + t * (end[1] - start[1])
-            pos = (int(mx) - DRONE_SIZE//2, int(my) - DRONE_SIZE//2)
+            pos = (int(mx) - DRONE_SIZE // 2, int(my) - DRONE_SIZE // 2)
             screen.blit(self.drone_img, pos)
             dron_id_text = self.font_small.render(str(drone.id), True, (255, 255, 255))
             dron_id_rect = dron_id_text.get_rect(center=(int(mx), int(my)))
             screen.blit(dron_id_text, dron_id_rect)
 
-    def start(self, delay_ms=4000):
+    def goo(self, delay_ms=4000):
         pygame.init()
         self.font_zone = pygame.font.Font(None, 20)
         self.font_small = pygame.font.Font(None, 14)
         screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("Fly-in")
         try:
-            raw = pygame.image.load('tll.png').convert_alpha()
+            raw = pygame.image.load("tll.png").convert_alpha()
             self.drone_img = pygame.transform.smoothscale(raw, (DRONE_SIZE, DRONE_SIZE))
         except:
             self.drone_img = pygame.Surface((DRONE_SIZE, DRONE_SIZE), pygame.SRCALPHA)
-            pygame.draw.circle(self.drone_img, (0, 0, 255), (DRONE_SIZE//2, DRONE_SIZE//2), DRONE_SIZE//2)
+            pygame.draw.circle(
+                self.drone_img,
+                (0, 0, 255),
+                (DRONE_SIZE // 2, DRONE_SIZE // 2),
+                DRONE_SIZE // 2,
+            )
 
         clock = pygame.time.Clock()
         running = True

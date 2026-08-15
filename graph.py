@@ -21,9 +21,9 @@ class GraphBuilder:
         for conn in self.data.connections:
             z1 = self.zones_dict[conn.zone1]
             z2 = self.zones_dict[conn.zone2]
-
             z1.neighbors.append((z2, conn))
             z2.neighbors.append((z1, conn))
+
 
     def add_costs(self):
         for key, zone in self.zones_dict.items():

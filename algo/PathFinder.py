@@ -20,10 +20,10 @@ class PathFinder:
                 total += 1
         return total
 
-    def k_shortest_paths(self, start, end, K=5):
+    def k_shortest_paths(self, start, end, K=2):
         """
         Returns up to K shortest paths from start to end, ordered by total cost.
-        """        
+        """    
         def dijkstra_single(source, target, blocked_edges=None):
             """
             Run Dijkstra from source to target.
@@ -45,6 +45,7 @@ class PathFinder:
                 if current_name == target:
                     break
                 current_zone = self.graph.zones_dict[current_name]
+                
                 for neighbor_zone, conn in current_zone.neighbors:
                     if neighbor_zone.zone == "blocked":
                         continue
@@ -149,4 +150,4 @@ class PathFinder:
             lowest_cost, best_path = heapq.heappop(candidate_paths)
             final_paths.append(best_path)
 
-        return final_paths[:2]
+        return final_paths

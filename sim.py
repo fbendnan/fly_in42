@@ -21,7 +21,7 @@ class Simulation:
 
     def _create_drones(self):
         pf = PathFinder(self.graph)
-        paths = pf.k_shortest_paths(self.start, self.end, K=10)
+        paths = pf.k_shortest_paths(self.start, self.end, K=1)
         if not paths:
             raise ValueError("No path from start to end zone")
         for i in range(self.nb_drones):

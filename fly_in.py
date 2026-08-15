@@ -2,6 +2,7 @@ import sys
 from graph import GraphBuilder
 from sim import Simulation
 from display import Display
+
 # from algo.PathFinder import PathFinder
 
 # from parse.parsing import ParseConfig
@@ -18,7 +19,6 @@ try:
     g.add_zone_neighbors()
     g.add_costs()
 
-
     start = g.data.start_hub.name
     end = g.data.end_hub.name
 
@@ -30,12 +30,9 @@ try:
 
     # Create display and start animation
     view = Display(sim)
-    view.start(delay_ms=400)
-
-
+    view.goo(delay_ms=400)
 
     # print("path = ", p.dijkstra())
-
 
     # print(parser.nb_drones)
     # print(parser.start_hub.name, parser.start_hub.x, parser.start_hub.y)
