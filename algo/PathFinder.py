@@ -14,7 +14,7 @@ class PathFinder:
         for i in range(1, len(path)):
             zone_name = path[i]
             zone = self.graph.zones_dict[zone_name]
-            if zone.zone == "restricted":
+            if zone["zone"]== "restricted":
                 total += 2
             else:
                 total += 1
@@ -46,23 +46,23 @@ class PathFinder:
                     break
                 current_zone = self.graph.zones_dict[current_name]
                 
-                for neighbor_zone, conn in current_zone.neighbors:
-                    if neighbor_zone.zone == "blocked":
+                for neighbor_zone, conn in current_zone["neighbors"]:
+                    if neighbor_zone["zone"]== "blocked":
                         continue
-                    if (current_name, neighbor_zone.name) in blocked_edges:
+                    if (current_name, neighbor_zone["name"]) in blocked_edges:
                         continue
-                    if neighbor_zone.zone == "restricted":
+                    if neighbor_zone["zone"]== "restricted":
                         move_cost = 2
-                    elif neighbor_zone.zone == "priority":
+                    elif neighbor_zone["zone"]== "priority":
                         move_cost = 0.9
                     else:
                         move_cost = 1
-                    # move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                    # move_cost = 2 if neighbor_zone["zone"]== "restricted" else 1
                     new_cost = current_cost + move_cost
-                    if new_cost < dist[neighbor_zone.name]:
-                        dist[neighbor_zone.name] = new_cost
-                        parent[neighbor_zone.name] = current_name
-                        heapq.heappush(pq, (new_cost, neighbor_zone.name))
+                    if new_cost < dist[neighbor_zone["name"]]:
+                        dist[neighbor_zone["name"]] = new_cost
+                        parent[neighbor_zone["name"]] = current_name
+                        heapq.heappush(pq, (new_cost, neighbor_zone["name"]))
 
             if dist[target] == float('inf'):
                 return None, float('inf')
@@ -112,25 +112,25 @@ class PathFinder:
                         if current_name == target:
                             break
                         current_zone = self.graph.zones_dict[current_name]
-                        for neighbor_zone, conn in current_zone.neighbors:
-                            if neighbor_zone.zone == "blocked":
+                        for neighbor_zone, conn in current_zone["neighbors"]:
+                            if neighbor_zone["zone"]== "blocked":
                                 continue
-                            if (current_name, neighbor_zone.name) in blocked_edges:
+                            if (current_name, neighbor_zone["name"]) in blocked_edges:
                                 continue
-                            if neighbor_zone.name in blocked_nodes:
+                            if neighbor_zone["name"]in blocked_nodes:
                                 continue
-                            # move_cost = 2 if neighbor_zone.zone == "restricted" else 1
-                            if neighbor_zone.zone == "restricted":
+                            # move_cost = 2 if neighbor_zone["zone"]== "restricted" else 1
+                            if neighbor_zone["zone"]== "restricted":
                                 move_cost = 2
-                            elif neighbor_zone.zone == "priority":
+                            elif neighbor_zone["zone"]== "priority":
                                 move_cost = 0.9
                             else:
                                 move_cost = 1
                             new_cost = current_cost + move_cost
-                            if new_cost < dist[neighbor_zone.name]:
-                                dist[neighbor_zone.name] = new_cost
-                                parent[neighbor_zone.name] = current_name
-                                heapq.heappush(pq, (new_cost, neighbor_zone.name))
+                            if new_cost < dist[neighbor_zone["name"]]:
+                                dist[neighbor_zone["name"]] = new_cost
+                                parent[neighbor_zone["name"]] = current_name
+                                heapq.heappush(pq, (new_cost, neighbor_zone["name"]))
 
                     if dist[target] == float('inf'):
                         return None, float('inf')

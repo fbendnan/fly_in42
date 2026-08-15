@@ -32,10 +32,10 @@ class Display:
         self.sim = simulation
         self.graph = simulation.graph
         self.zones = self.graph.zones_dict
-        self.min_x = min(z.x for z in self.zones.values())
-        self.max_x = max(z.x for z in self.zones.values())
-        self.min_y = min(z.y for z in self.zones.values())
-        self.max_y = max(z.y for z in self.zones.values())
+        self.min_x = min(z["x"] for z in self.zones.values())
+        self.max_x = max(z["x"] for z in self.zones.values())
+        self.min_y = min(z["y"] for z in self.zones.values())
+        self.max_y = max(z["y"] for z in self.zones.values())
         if self.max_x == self.min_x:
             self.max_x += 1
         if self.max_y == self.min_y:
@@ -56,14 +56,14 @@ class Display:
     def draw_connections(self, screen):
         drawn = set()
         for zone in self.zones.values():
-            start = self._to_screen(zone.x, zone.y)
-            for neighbor, conn in zone.neighbors:
-                edge = tuple(sorted((zone.name, neighbor.name)))
+            start = self._to_screen(zone["x"], zone["y"])
+            for neighbor, conn in zone["neighbors"]:
+                edge = tuple(sorted((zone["name"], neighbor["name"])))
                 if edge in drawn:
                     continue
                 drawn.add(edge)
-                end = self._to_screen(neighbor.x, neighbor.y)
-                cap = conn.max_link_capacity
+                end = self._to_screen(neighbor["x"], neighbor["y"])
+                cap = conn["max_link_capacity"]
                 pygame.draw.line(screen, (100, 100, 100), start, end)
                 mx = (start[0] + end[0]) // 2
                 my = (start[1] + end[1]) // 2 - 10
@@ -72,8 +72,8 @@ class Display:
 
     def draw_zones(self, screen):
         for name, zone in self.zones.items():
-            color = COLOR_MAP.get(zone.color, DEFAULT_ZONE_COLOR)
-            cx, cy = self._to_screen(zone.x, zone.y)
+            color = COLOR_MAP.get(zone["color"], DEFAULT_ZONE_COLOR)
+            cx, cy = self._to_screen(zone["x"], zone["y"])
             pygame.draw.circle(screen, (0, 0, 0), (cx + 2, cy + 2), ZONE_RADIUS, 0)
             pygame.draw.circle(screen, color, (cx, cy), ZONE_RADIUS)
             pygame.draw.circle(screen, (0, 0, 0), (cx, cy), ZONE_RADIUS, 1)
@@ -86,7 +86,7 @@ class Display:
             screen.blit(name_text, name_rect)
 
             cap_text = self.font_small.render(
-                f"max:{zone.max_drones}", True, (80, 80, 80)
+                f"max:{zone["max_drones"]}", True, (80, 80, 80)
             )
             cap_rect = cap_text.get_rect(center=(cx, cy + ZONE_RADIUS - 12))
             screen.blit(cap_text, cap_rect)
@@ -107,7 +107,7 @@ class Display:
             if not drones:
                 continue
             zone = self.zones[zone_name]
-            cx, cy = self._to_screen(zone.x, zone.y)
+            cx, cy = self._to_screen(zone["x"], zone["y"])
             total = len(drones)
             for idx, drone in enumerate(drones):
                 angle = 2 * math.pi * idx / total
@@ -124,8 +124,8 @@ class Display:
         for drone in in_transit_drones:
             from_zone = self.zones[drone.current_zone]
             to_zone = self.zones[drone.target_zone]
-            start = self._to_screen(from_zone.x, from_zone.y)
-            end = self._to_screen(to_zone.x, to_zone.y)
+            start = self._to_screen(from_zone["x"], from_zone["y"])
+            end = self._to_screen(to_zone["x"], to_zone["y"])
             t = 0.5
             mx = start[0] + t * (end[0] - start[0])
             my = start[1] + t * (end[1] - start[1])

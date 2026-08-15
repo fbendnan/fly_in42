@@ -69,5 +69,6 @@ class Zone(BaseModel):
             "y": y,
             "zone": zone_type,
             "max_drones": max_drones_int,
+            "neighbors" : [],
             "color": color_val,
         }

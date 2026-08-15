@@ -7,8 +7,8 @@ class Simulation:
     def __init__(self, graph, nb_drones):
         self.graph = graph
         self.nb_drones = nb_drones
-        self.start = graph.data.start_hub.name
-        self.end = graph.data.end_hub.name
+        self.start = graph.data.start_hub["name"]
+        self.end = graph.data.end_hub["name"]
         self.zones = graph.zones_dict
         self.turns = 0
         self.drones = []
@@ -34,8 +34,8 @@ class Simulation:
 
     def _get_connection(self, curr_zone, next_zone):
         for conn in self.graph.data.connections:
-            if (conn.zone1 == curr_zone and conn.zone2 == next_zone) or \
-               (conn.zone1 == next_zone and conn.zone2 == curr_zone):
+            if (conn["zone1"] == curr_zone and conn["zone2"] == next_zone) or \
+               (conn["zone1"] == next_zone and conn["zone2"] == curr_zone):
                 return conn
         return None
 
@@ -48,7 +48,7 @@ class Simulation:
         for name, zone_obj in self.zones.items():
             occupied = len(self.zone_occupancy[name])
             reserved = self.reserved.get(name, 0)
-            avail[name] = zone_obj.max_drones - occupied - reserved
+            avail[name] = zone_obj["max_drones"] - occupied - reserved
         return avail
 
     def step(self):
@@ -56,11 +56,8 @@ class Simulation:
             return True
 
         turn_moves = []
-
         arriving_drones = [d for d in self.drones if d.state == "in_transit"]
-
         proposals = []   # (drone, from_zone, to_zone, connection_object)
-
         for drone in self.drones:
             if drone.state != "in_zone":
                 continue
@@ -91,7 +88,7 @@ class Simulation:
 
             conn_key = tuple(sorted([from_z, to_z]))
 
-            if accepted_connections[conn_key] >= conn.max_link_capacity:
+            if accepted_connections[conn_key] >= conn["max_link_capacity"]:
                 continue
 
             if available[to_z] <= 0:
@@ -105,11 +102,11 @@ class Simulation:
 
         for drone, from_z, to_z, conn in accepted_proposals:
             self.zone_occupancy[from_z].remove(drone.id)
-            conn_name = f"{conn.zone1}-{conn.zone2}"
+            conn_name = f"{conn["zone1"]}-{conn["zone2"]}"
 
             zone_obj = self.zones[to_z]
 
-            if zone_obj.zone == "restricted":
+            if zone_obj["zone"] == "restricted":
                 drone.state = "in_transit"
                 drone.target_zone = to_z
                 self.reserved[to_z] += 1

@@ -9,7 +9,16 @@ class ParseConfig:
         self.start_hub = None
         self.end_hub = None
         self.hubs = []
+        self.hubs_name = []
         self.connections = []
+
+    def is_connected_hub(self, hub):
+        for c in self.connections:
+            if c["zone1"] == hub or c["zone2"] == hub:
+                return True
+            
+        return False
+
 
     def parser(self):
         with open(self.file_name) as f:
@@ -44,17 +53,46 @@ class ParseConfig:
             try:
                 if key == "start_hub":
                     validated_data = Zone.validate_hub(value)
-                    self.start_hub = Zone(**validated_data)
+                    if self.start_hub is not None:
+                        raise ValueError(
+                            "Duplicted start zone"
+                        )
+                    self.hubs_name.append(validated_data["name"])
+                    self.start_hub = validated_data
                 elif key == "end_hub":
                     validated_data = Zone.validate_hub(value)
-                    self.end_hub = Zone(**validated_data)
+                    if self.end_hub is not None:
+                        raise ValueError(
+                            "Duplicted end zone"
+                        )
+                    self.hubs_name.append(validated_data["name"])
+                    self.end_hub = validated_data
                 elif key == "hub":
                     validated_data = Zone.validate_hub(value)
-                    self.hubs.append(Zone(**validated_data))
-                elif key == "connection":
+                    if validated_data["name"] in self.hubs_name:
+                        raise ValueError(f"Duplicate zone name: {validated_data['name']}")
+                    for h in self.hubs:
+                        if h["x"] == validated_data["x"] and h["y"] == validated_data["y"]:
+                            raise ValueError(f"Duplicate coordinates ({validated_data['x']}, {validated_data['y']})")
+                    if self.start_hub is not None and (validated_data["x"] == self.start_hub["x"] and validated_data["y"] == self.start_hub["y"]):
+                        raise ValueError(f"Hub coordinates ({validated_data['x']}, {validated_data['y']}) conflict with start hub")
+                    if self.end_hub is not None and (validated_data["x"] == self.end_hub["x"] and validated_data["y"] == self.end_hub["y"]):
+                        raise ValueError(f"Hub coordinates ({validated_data['x']}, {validated_data['y']}) conflict with end hub")
 
+                    self.hubs_name.append(validated_data["name"])
+                    self.hubs.append(validated_data)
+                elif key == "connection":
                     validated_data = Connection.validate_connection(value)
-                    self.connections.append(Connection(**validated_data))
+                    zone1 = validated_data["zone1"]
+                    zone2 = validated_data["zone2"]
+                    if zone1 not in self.hubs_name or zone2 not in self.hubs_name:
+                        raise ValueError(f"Connection {zone1}-{zone2} references unknown zone(s)")
+                    for c in self.connections:
+                        if (c["zone1"] == zone1 and c["zone2"] == zone2) or \
+                            (c["zone1"] == zone2 and c["zone2"] == zone1):
+                                raise ValueError(f"Duplicate connection: {zone1}-{zone2}")
+                    self.connections.append(validated_data)
+
                 else:
                     raise ValueError(f"Unknown keyword '{key}'")
             except Exception as e:
@@ -64,14 +102,17 @@ class ParseConfig:
             raise ValueError("Missing 'start_hub' definition")
         if self.end_hub is None:
             raise ValueError("Missing 'end_hub' definition")
+        for hub in self.hubs_name:
+            if not self.is_connected_hub(hub):
+                raise ValueError(f"{hub} is not connected")
 
-        all_zone_names = {self.start_hub.name, self.end_hub.name}
-        all_zone_names.update(hub.name for hub in self.hubs)
+        all_zone_names = {self.start_hub["name"], self.end_hub["name"]}
+        all_zone_names.update(hub["name"] for hub in self.hubs)
 
         for conn in self.connections:
-            if conn.zone1 not in all_zone_names:
-                raise ValueError(f"Connection references unknown zone '{conn.zone1}'")
-            if conn.zone2 not in all_zone_names:
-                raise ValueError(f"Connection references unknown zone '{conn.zone2}'")
+            if conn["zone1"] not in all_zone_names:
+                raise ValueError(f"Connection references unknown zone '{conn["zone1"]}'")
+            if conn["zone2"] not in all_zone_names:
+                raise ValueError(f"Connection references unknown zone '{conn["zone2"]}'")
 
         return self
