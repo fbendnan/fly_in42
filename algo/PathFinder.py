@@ -51,7 +51,13 @@ class PathFinder:
                         continue
                     if (current_name, neighbor_zone.name) in blocked_edges:
                         continue
-                    move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                    if neighbor_zone.zone == "restricted":
+                        move_cost = 2
+                    elif neighbor_zone.zone == "priority":
+                        move_cost = 0.9
+                    else:
+                        move_cost = 1
+                    # move_cost = 2 if neighbor_zone.zone == "restricted" else 1
                     new_cost = current_cost + move_cost
                     if new_cost < dist[neighbor_zone.name]:
                         dist[neighbor_zone.name] = new_cost
@@ -113,7 +119,13 @@ class PathFinder:
                                 continue
                             if neighbor_zone.name in blocked_nodes:
                                 continue
-                            move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                            # move_cost = 2 if neighbor_zone.zone == "restricted" else 1
+                            if neighbor_zone.zone == "restricted":
+                                move_cost = 2
+                            elif neighbor_zone.zone == "priority":
+                                move_cost = 0.9
+                            else:
+                                move_cost = 1
                             new_cost = current_cost + move_cost
                             if new_cost < dist[neighbor_zone.name]:
                                 dist[neighbor_zone.name] = new_cost
