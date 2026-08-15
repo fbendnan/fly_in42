@@ -1,7 +1,7 @@
 import sys
-from graph import GraphBuilder
-from sim import Simulation
-from display import Display
+from helpers.graph import GraphBuilder
+from helpers.sim import Simulation
+from helpers.display import Display
 
 # from algo.PathFinder import PathFinder
 
