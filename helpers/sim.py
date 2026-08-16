@@ -1,24 +1,27 @@
+from typing import Dict, List, Any, Optional, Tuple, DefaultDict
 from helpers.dron import Drone
 from algo.PathFinder import PathFinder
 from collections import defaultdict
+from helpers.graph import GraphBuilder
 
 
 class Simulation:
-    def __init__(self, graph, nb_drones):
-        self.graph = graph
-        self.nb_drones = nb_drones
-        self.start = graph.data.start_hub["name"]
-        self.end = graph.data.end_hub["name"]
-        self.zones = graph.zones_dict
-        self.turns = 0
-        self.drones = []
-        self.zone_occupancy = {name: [] for name in self.zones}
-        self.conn_occupency = defaultdict(int)
-        self.reserved = defaultdict(int)
+    def __init__(self, graph: GraphBuilder, nb_drones: int) -> None:
+        self.graph: GraphBuilder = graph
+        self.nb_drones: int = nb_drones
+        self.start: str = graph.data.start_hub["name"]
+        self.end: str = graph.data.end_hub["name"]
+        self.zones: Dict[str, Any] = graph.zones_dict
+        self.turns: int = 0
+        self.drones: List[Drone] = []
+        self.zone_occupancy: Dict[str, List[int]] = {
+            name: [] for name in self.zones}
+        self.conn_occupency: DefaultDict[Any, int] = defaultdict(int)
+        self.reserved: DefaultDict[Any, int] = defaultdict(int)
         self._create_drones()
         self.zone_occupancy[self.start] = list(range(1, nb_drones + 1))
 
-    def _create_drones(self):
+    def _create_drones(self) -> None:
         pf = PathFinder(self.graph)
         paths = pf.k_shortest_paths(self.start, self.end, K=2)
         if not paths:
@@ -29,58 +32,83 @@ class Simulation:
             drone.path = path.copy()
             self.drones.append(drone)
 
-    def _all_delivered(self):
+    def _all_delivered(self) -> bool:
         return all(d.state == "delivered" for d in self.drones)
 
-    def _get_connection(self, curr_zone, next_zone):
+    def _get_connection(
+        self, curr_zone: str, next_zone: str
+    ) -> Optional[Dict[str, Any]]:
         for conn in self.graph.data.connections:
-            if (conn["zone1"] == curr_zone and conn["zone2"] == next_zone) or \
-               (conn["zone1"] == next_zone and conn["zone2"] == curr_zone):
+            if (
+                conn["zone1"] == curr_zone
+                and conn["zone2"] == next_zone
+            ) or (
+                conn["zone1"] == next_zone
+                and conn["zone2"] == curr_zone
+            ):
                 return conn
         return None
 
-    def _zone_available_space(self):
+    def _zone_available_space(self) -> Dict[str, int]:
         """
         Returns a dict {zone_name: free_slots}.
-        free_slots = max_drones - (drones currently inside) - (drones in transit TO this zone)
+        free_slots = max_drones - (drones currently inside)
+        - (drones in transit TO this zone)
         """
-        avail = {}
+        avail: Dict[str, int] = {}
         for name, zone_obj in self.zones.items():
             occupied = len(self.zone_occupancy[name])
             reserved = self.reserved.get(name, 0)
-            avail[name] = zone_obj["max_drones"] - occupied - reserved
+            avail[name] = (
+                zone_obj["max_drones"] - occupied - reserved
+            )
         return avail
 
-    def step(self):
+    def step(self) -> bool:
         if self._all_delivered():
             return True
 
-        turn_moves = []
-        arriving_drones = [d for d in self.drones if d.state == "in_transit"]
-        proposals = []   # (drone, from_zone, to_zone, connection_object)
+        turn_moves: List[str] = []
+        arriving_drones: List[Drone] = [
+            d for d in self.drones if d.state == "in_transit"
+        ]
+        proposals: List[Tuple[Drone, str, str, Dict[str, Any]]] = []
+
         for drone in self.drones:
             if drone.state != "in_zone":
                 continue
 
             if len(drone.path) <= 1:
-                if drone.current_zone == self.end and drone.state != "delivered":
+                if (
+                    drone.current_zone == self.end
+                    and drone.state != "delivered"
+                ):
                     drone.state = "delivered"
-                    if drone.id in self.zone_occupancy[drone.current_zone]:
-                        self.zone_occupancy[drone.current_zone].remove(drone.id)
+                    if drone.id in self.zone_occupancy[
+                        drone.current_zone
+                    ]:
+                        self.zone_occupancy[
+                            drone.current_zone
+                        ].remove(drone.id)
                 continue
 
             nxt = drone.path[1]
             conn = self._get_connection(drone.current_zone, nxt)
             if not conn:
                 continue
-            proposals.append((drone, drone.current_zone, nxt, conn))
+            proposals.append(
+                (drone, drone.current_zone, nxt, conn)
+            )
 
         available = self._zone_available_space()
 
-        proposals.sort(key=lambda p: (len(p[0].path), p[0].id))
+        proposals.sort(
+            key=lambda p: (len(p[0].path), p[0].id)
+        )
 
-        accepted_proposals = []
-        accepted_connections = defaultdict(int)
+        accepted_proposals: List[Tuple[Drone, str, str, Dict[str, Any]]] = []
+        accepted_connections: DefaultDict[
+            Tuple[str, str], int] = defaultdict(int)
 
         for drone, from_z, to_z, conn in proposals:
             if drone.id not in self.zone_occupancy[from_z]:
@@ -88,21 +116,25 @@ class Simulation:
 
             conn_key = tuple(sorted([from_z, to_z]))
 
-            if accepted_connections[conn_key] >= conn["max_link_capacity"]:
+            if (
+                accepted_connections[conn_key]
+                >= conn["max_link_capacity"]
+            ):
                 continue
 
             if available[to_z] <= 0:
                 continue
 
-            accepted_proposals.append((drone, from_z, to_z, conn))
+            accepted_proposals.append(
+                (drone, from_z, to_z, conn)
+            )
             accepted_connections[conn_key] += 1
             available[to_z] -= 1
             available[from_z] += 1
 
-
         for drone, from_z, to_z, conn in accepted_proposals:
             self.zone_occupancy[from_z].remove(drone.id)
-            conn_name = f"{conn["zone1"]}-{conn["zone2"]}"
+            conn_name = f"{conn['zone1']}-{conn['zone2']}"
 
             zone_obj = self.zones[to_z]
 
@@ -110,7 +142,9 @@ class Simulation:
                 drone.state = "in_transit"
                 drone.target_zone = to_z
                 self.reserved[to_z] += 1
-                turn_moves.append(f"D{drone.id}-{conn_name}")
+                turn_moves.append(
+                    f"D{drone.id}-{conn_name}"
+                )
 
                 if drone.path and drone.path[0] == from_z:
                     drone.path.pop(0)
@@ -139,11 +173,14 @@ class Simulation:
                 drone.state = "delivered"
                 self.zone_occupancy[to_zone].remove(drone.id)
 
-            if to_zone in self.reserved and self.reserved[to_zone] > 0:
+            if (
+                to_zone in self.reserved
+                and self.reserved[to_zone] > 0
+            ):
                 self.reserved[to_zone] -= 1
                 if self.reserved[to_zone] == 0:
                     del self.reserved[to_zone]
-    
+
         if turn_moves:
             print(" ".join(turn_moves))
 

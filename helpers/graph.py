@@ -1,9 +1,8 @@
 from parse.parsing import ParseConfig
-from algo.PathFinder import PathFinder
-from helpers.dron import Drone
+
 
 class GraphBuilder:
-    def __init__(self, file_name):
+    def __init__(self, file_name: str):
         self.data = None
         self.zones_dict = {}
         self.file_name = file_name
@@ -23,8 +22,6 @@ class GraphBuilder:
             z2 = self.zones_dict[conn["zone2"]]
             z1["neighbors"].append((z2, conn))
             z2["neighbors"].append((z1, conn))
-
-
     # def add_costs(self):
     #     for key, zone in self.zones_dict.items():
     #         if zone["zone"]== 'blocked':

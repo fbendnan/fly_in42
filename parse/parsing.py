@@ -1,118 +1,255 @@
-from parse.hub_model import Zone
-from parse.connection import Connection
+from collections import defaultdict
+from typing import Any
+
+from algo.PathFinder import PathFinder
+from helpers.dron import Drone
 
 
-class ParseConfig:
-    def __init__(self, file_name: str):
-        self.file_name = file_name
-        self.nb_drones = 0
-        self.start_hub = None
-        self.end_hub = None
-        self.hubs = []
-        self.hubs_name = []
-        self.connections = []
+class Simulation:
+    def __init__(self, graph: Any, nb_drones: int) -> None:
+        self.graph = graph
+        self.nb_drones = nb_drones
+        self.start: str = graph.data.start_hub["name"]
+        self.end: str = graph.data.end_hub["name"]
+        self.zones: dict[str, Any] = graph.zones_dict
+        self.turns: int = 0
+        self.drones: list[Drone] = []
+        self.zone_occupancy: dict[str, list[int]] = {
+            name: [] for name in self.zones
+        }
+        self.conn_occupency: defaultdict[Any, int] = defaultdict(int)
+        self.reserved: defaultdict[str, int] = defaultdict(int)
+        self._create_drones()
+        self.zone_occupancy[self.start] = list(
+            range(1, nb_drones + 1)
+        )
 
-    def is_connected_hub(self, hub):
-        for c in self.connections:
-            if c["zone1"] == hub or c["zone2"] == hub:
-                return True
-            
-        return False
+    def _create_drones(self) -> None:
+        pf = PathFinder(self.graph)
+        paths = pf.k_shortest_paths(
+            self.start,
+            self.end,
+            K=2,
+        )
 
+        if not paths:
+            raise ValueError("No path from start to end zone")
 
-    def parser(self):
-        with open(self.file_name) as f:
-            lines = f.readlines()
+        for i in range(self.nb_drones):
+            path = paths[i % len(paths)]
+            drone = Drone(i + 1, self.start)
+            drone.path = path.copy()
+            self.drones.append(drone)
 
-        line_no = 0
-        for raw_line in lines:
-            stripped_line = raw_line.strip()
-            if not stripped_line or stripped_line.startswith("#"):
+    def _all_delivered(self) -> bool:
+        return all(
+            d.state == "delivered"
+            for d in self.drones
+        )
+
+    def _get_connection(
+        self,
+        curr_zone: str,
+        next_zone: str,
+    ) -> dict[str, Any] | None:
+        for conn in self.graph.data.connections:
+            if (
+                conn["zone1"] == curr_zone
+                and conn["zone2"] == next_zone
+            ) or (
+                conn["zone1"] == next_zone
+                and conn["zone2"] == curr_zone
+            ):
+                return conn
+
+        return None
+
+    def _zone_available_space(self) -> dict[str, int]:
+        """
+        Returns a dict {zone_name: free_slots}.
+        free_slots = max_drones - (drones currently inside)
+        - (drones in transit TO this zone)
+        """
+        avail: dict[str, int] = {}
+
+        for name, zone_obj in self.zones.items():
+            occupied = len(self.zone_occupancy[name])
+            reserved = self.reserved.get(name, 0)
+            avail[name] = (
+                zone_obj["max_drones"]
+                - occupied
+                - reserved
+            )
+
+        return avail
+
+    def step(self) -> bool:
+        if self._all_delivered():
+            return True
+
+        turn_moves: list[str] = []
+
+        arriving_drones: list[Drone] = [
+            d
+            for d in self.drones
+            if d.state == "in_transit"
+        ]
+
+        proposals: list[
+            tuple[Drone, str, str, dict[str, Any]]
+        ] = []
+
+        for drone in self.drones:
+            if drone.state != "in_zone":
                 continue
-            line_no += 1
-            parts = stripped_line.split(":", 1)
-            if len(parts) != 2:
-                raise ValueError(f"Line {line_no}: Missing colon separator")
-            key = parts[0].strip()
-            value = parts[1].strip()
-            if line_no == 1:
-                if key != "nb_drones":
-                    raise ValueError(f"Line {line_no}: First line must be 'nb_drones'")
-                try:
-                    self.nb_drones = int(value)
-                except ValueError:
-                    raise ValueError(
-                        f"Line {line_no}: nb_drones must be integer, got '{value}'"
-                    )
-                if self.nb_drones < 1:
-                    raise ValueError(
-                        f"Line {line_no}: nb_drones must be ≥ 1, got {self.nb_drones}"
-                    )
+
+            if len(drone.path) <= 1:
+                if (
+                    drone.current_zone == self.end
+                    and drone.state != "delivered"
+                ):
+                    drone.state = "delivered"
+
+                    if drone.id in self.zone_occupancy[
+                        drone.current_zone
+                    ]:
+                        self.zone_occupancy[
+                            drone.current_zone
+                        ].remove(drone.id)
+
                 continue
 
-            try:
-                if key == "start_hub":
-                    validated_data = Zone.validate_hub(value)
-                    if self.start_hub is not None:
-                        raise ValueError(
-                            "Duplicted start zone"
-                        )
-                    self.hubs_name.append(validated_data["name"])
-                    self.start_hub = validated_data
-                elif key == "end_hub":
-                    validated_data = Zone.validate_hub(value)
-                    if self.end_hub is not None:
-                        raise ValueError(
-                            "Duplicted end zone"
-                        )
-                    self.hubs_name.append(validated_data["name"])
-                    self.end_hub = validated_data
-                elif key == "hub":
-                    validated_data = Zone.validate_hub(value)
-                    if validated_data["name"] in self.hubs_name:
-                        raise ValueError(f"Duplicate zone name: {validated_data['name']}")
-                    for h in self.hubs:
-                        if h["x"] == validated_data["x"] and h["y"] == validated_data["y"]:
-                            raise ValueError(f"Duplicate coordinates ({validated_data['x']}, {validated_data['y']})")
-                    if self.start_hub is not None and (validated_data["x"] == self.start_hub["x"] and validated_data["y"] == self.start_hub["y"]):
-                        raise ValueError(f"Hub coordinates ({validated_data['x']}, {validated_data['y']}) conflict with start hub")
-                    if self.end_hub is not None and (validated_data["x"] == self.end_hub["x"] and validated_data["y"] == self.end_hub["y"]):
-                        raise ValueError(f"Hub coordinates ({validated_data['x']}, {validated_data['y']}) conflict with end hub")
+            nxt = drone.path[1]
+            conn = self._get_connection(
+                drone.current_zone,
+                nxt,
+            )
 
-                    self.hubs_name.append(validated_data["name"])
-                    self.hubs.append(validated_data)
-                elif key == "connection":
-                    validated_data = Connection.validate_connection(value)
-                    zone1 = validated_data["zone1"]
-                    zone2 = validated_data["zone2"]
-                    if zone1 not in self.hubs_name or zone2 not in self.hubs_name:
-                        raise ValueError(f"Connection {zone1}-{zone2} references unknown zone(s)")
-                    for c in self.connections:
-                        if (c["zone1"] == zone1 and c["zone2"] == zone2) or \
-                            (c["zone1"] == zone2 and c["zone2"] == zone1):
-                                raise ValueError(f"Duplicate connection: {zone1}-{zone2}")
-                    self.connections.append(validated_data)
+            if not conn:
+                continue
 
-                else:
-                    raise ValueError(f"Unknown keyword '{key}'")
-            except Exception as e:
-                raise ValueError(f"Line {line_no}: {e}")
+            proposals.append(
+                (
+                    drone,
+                    drone.current_zone,
+                    nxt,
+                    conn,
+                )
+            )
 
-        if self.start_hub is None:
-            raise ValueError("Missing 'start_hub' definition")
-        if self.end_hub is None:
-            raise ValueError("Missing 'end_hub' definition")
-        for hub in self.hubs_name:
-            if not self.is_connected_hub(hub):
-                raise ValueError(f"{hub} is not connected")
+        available = self._zone_available_space()
 
-        all_zone_names = {self.start_hub["name"], self.end_hub["name"]}
-        all_zone_names.update(hub["name"] for hub in self.hubs)
+        proposals.sort(
+            key=lambda p: (len(p[0].path), p[0].id)
+        )
 
-        for conn in self.connections:
-            if conn["zone1"] not in all_zone_names:
-                raise ValueError(f"Connection references unknown zone '{conn["zone1"]}'")
-            if conn["zone2"] not in all_zone_names:
-                raise ValueError(f"Connection references unknown zone '{conn["zone2"]}'")
+        accepted_proposals: list[
+            tuple[Drone, str, str, dict[str, Any]]
+        ] = []
 
-        return self
+        accepted_connections: defaultdict[
+            tuple[str, str], int
+        ] = defaultdict(int)
+
+        for drone, from_z, to_z, conn in proposals:
+            if drone.id not in self.zone_occupancy[from_z]:
+                continue
+
+            conn_key = tuple(
+                sorted([from_z, to_z])
+            )
+
+            if (
+                accepted_connections[conn_key]
+                >= conn["max_link_capacity"]
+            ):
+                continue
+
+            if available[to_z] <= 0:
+                continue
+
+            accepted_proposals.append(
+                (
+                    drone,
+                    from_z,
+                    to_z,
+                    conn,
+                )
+            )
+
+            accepted_connections[conn_key] += 1
+            available[to_z] -= 1
+            available[from_z] += 1
+
+        for drone, from_z, to_z, conn in accepted_proposals:
+            self.zone_occupancy[from_z].remove(drone.id)
+            conn_name = (
+                f"{conn['zone1']}-{conn['zone2']}"
+            )
+
+            zone_obj = self.zones[to_z]
+
+            if zone_obj["zone"] == "restricted":
+                drone.state = "in_transit"
+                drone.target_zone = to_z
+                self.reserved[to_z] += 1
+
+                turn_moves.append(
+                    f"D{drone.id}-{conn_name}"
+                )
+
+                if drone.path and drone.path[0] == from_z:
+                    drone.path.pop(0)
+
+            else:
+                drone.current_zone = to_z
+                self.zone_occupancy[to_z].append(
+                    drone.id
+                )
+                turn_moves.append(
+                    f"D{drone.id}-{to_z}"
+                )
+
+                if drone.path and drone.path[0] == from_z:
+                    drone.path.pop(0)
+
+                if to_z == self.end:
+                    drone.state = "delivered"
+                    self.zone_occupancy[to_z].remove(
+                        drone.id
+                    )
+
+        for drone in arriving_drones:
+            to_zone = drone.target_zone
+
+            turn_moves.append(
+                f"D{drone.id}-{to_zone}"
+            )
+            self.zone_occupancy[to_zone].append(
+                drone.id
+            )
+
+            drone.state = "in_zone"
+            drone.current_zone = to_zone
+            drone.target_zone = None
+
+            if to_zone == self.end:
+                drone.state = "delivered"
+                self.zone_occupancy[to_zone].remove(
+                    drone.id
+                )
+
+            if (
+                to_zone in self.reserved
+                and self.reserved[to_zone] > 0
+            ):
+                self.reserved[to_zone] -= 1
+
+                if self.reserved[to_zone] == 0:
+                    del self.reserved[to_zone]
+
+        if turn_moves:
+            print(" ".join(turn_moves))
+
+        self.turns += 1
+        return self._all_delivered()
