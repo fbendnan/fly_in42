@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 
 class Drone:
-    def __init__(self, drone_id: int, start_zone: str):
-        self.id = drone_id
+    def __init__(self, drone_id: int, start_zone: str) -> None:
+        self.id: int = drone_id
         self.path: List[str] = []
         self.current_zone: str = start_zone
         self.state: str = "in_zone"
-        self.target_zone: str | None = None
+        self.target_zone: Optional[str] = None

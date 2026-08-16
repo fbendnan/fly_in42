@@ -1,25 +1,26 @@
+from typing import Any, Optional, Dict, List
 from parse.hub_model import Zone
 from parse.connection import Connection
 
 
 class ParseConfig:
-    def __init__(self, file_name: str):
-        self.file_name = file_name
-        self.nb_drones = 0
-        self.start_hub = None
-        self.end_hub = None
-        self.hubs = []
-        self.hubs_name = []
-        self.connections = []
+    def __init__(self, file_name: str) -> None:
+        self.file_name: str = file_name
+        self.nb_drones: int = 0
+        self.start_hub: Optional[Dict[str, Any]] = None
+        self.end_hub: Optional[Dict[str, Any]] = None
+        self.hubs: List[Dict[str, Any]] = []
+        self.hubs_name: List[str] = []
+        self.connections: List[Dict[str, Any]] = []
 
-    def is_connected_hub(self, hub):
+    def is_connected_hub(self, hub: str) -> bool:
         for c in self.connections:
             if c["zone1"] == hub or c["zone2"] == hub:
                 return True
 
         return False
 
-    def parser(self):
+    def parser(self) -> "ParseConfig":
         with open(self.file_name) as f:
             lines = f.readlines()
 
@@ -28,7 +29,7 @@ class ParseConfig:
             stripped_line = raw_line.strip()
             if not stripped_line or stripped_line.startswith("#"):
                 continue
-            if '#' in stripped_line :
+            if '#' in stripped_line:
                 n_stripped_line = stripped_line.split('#', 1)
                 stripped_line = n_stripped_line[0]
             line_no += 1
@@ -152,21 +153,21 @@ class ParseConfig:
 
         if self.end_hub is None:
             raise ValueError("Missing 'end_hub' definition")
-        
+
         if self.start_hub["name"] == self.end_hub["name"]:
             raise ValueError(
                 "start and end zone should be different"
             )
-        if self.start_hub["x"] == self.end_hub["x"] and \
-           self.end_hub["y"] == self.start_hub["y"]:
-           raise ValueError(
-            "start and end cordinate should be different"
-           )
+        if (self.start_hub["x"] == self.end_hub["x"]
+                and self.end_hub["y"] == self.start_hub["y"]):
+            raise ValueError(
+                "start and end cordinate should be different"
+            )
         for h in self.hubs:
-            if (h["x"] == self.start_hub["x"] and \
-                self.start_hub["y"] == h["y"]) or \
-                (self.end_hub["x"] == h["x"] and\
-                self.end_hub["y"] == h["y"]):
+            if ((h["x"] == self.start_hub["x"]
+                    and self.start_hub["y"] == h["y"])
+                    or (self.end_hub["x"] == h["x"]
+                        and self.end_hub["y"] == h["y"])):
                 raise ValueError(
                     "Cordinate duplication"
                 )

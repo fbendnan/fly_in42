@@ -218,6 +218,7 @@ class Display:
         # Draw drones in transit
         for drone in in_transit_drones:
             from_zone = self.zones[drone.current_zone]
+            assert drone.target_zone is not None
             to_zone = self.zones[drone.target_zone]
 
             start = self._to_screen(

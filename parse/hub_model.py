@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
+from typing import Any, Optional, Literal, Dict, List
 import re
 
 
@@ -12,11 +12,11 @@ class Zone(BaseModel):
     )
     max_drones: int = Field(default=1)
     color: Optional[str] = None
-    neighbors: list = Field(default_factory=list)
+    neighbors: List[Any] = Field(default_factory=list)
     cost: int = 0
 
     @classmethod
-    def validate_hub(cls, value):
+    def validate_hub(cls, value: str) -> Dict[str, Any]:
         pattern = (
             r"^(?P<name>\w+)\s+(?P<x>-?\d+)\s+"
             r"(?P<y>-?\d+)(?:\s*\[(?P<options>.*?)\])?$"
@@ -30,7 +30,7 @@ class Zone(BaseModel):
         y = int(match.group("y"))
         options_str = match.group("options")
 
-        options_dict = {}
+        options_dict: Dict[str, str] = {}
         if options_str:
             pairs = re.findall(r"(\w+)\s*=\s*([^\s\]]+)", options_str)
             remaining = re.sub(r"\w+\s*=\s*[^\s\]]+", "", options_str)
@@ -54,7 +54,7 @@ class Zone(BaseModel):
         if zone_type not in ["normal", "priority", "restricted", "blocked"]:
             raise ValueError(f"Invalid zone type: {zone_type}")
 
-        max_drones_val = options_dict.get("max_drones", 1)
+        max_drones_val = options_dict.get("max_drones", "1")
         try:
             max_drones_int = int(max_drones_val)
         except ValueError:

@@ -1,10 +1,10 @@
 import heapq
 from typing import List, Optional, Tuple, Set, Dict
-# from helpers.graph import GraphBuilder
+from helpers.graph import GraphBuilder
 
 
 class PathFinder:
-    def __init__(self, graph) -> None:
+    def __init__(self, graph: GraphBuilder) -> None:
         self.graph = graph
         self.paths: List[List[str]] = []
         self.blocked_edges: Set[Tuple[str, str]] = set()
@@ -24,7 +24,7 @@ class PathFinder:
                 total += 1
 
         return total
-    
+
     def count_priority_zones(self, path: List[str]) -> int:
         """Total cost of a path (sum of movement costs to enter each zone)."""
         if len(path) <= 1:
@@ -36,9 +36,6 @@ class PathFinder:
             zone = self.graph.zones_dict[zone_name]
             if zone["zone"] == 'priority':
                 total += 1
-        return total
-            
-
         return total
 
     def k_shortest_paths(
@@ -165,16 +162,16 @@ class PathFinder:
                     blocked_nodes: set of node names that cannot be entered
                     (except source).
                     """
-                    dist = {
+                    dist: Dict[str, float] = {
                         name: float("inf")
                         for name in self.graph.zones_dict
                     }
-                    parent = {
+                    parent: Dict[str, Optional[str]] = {
                         name: None
                         for name in self.graph.zones_dict
                     }
                     dist[source] = 0.0
-                    pq = [(0.0, source)]
+                    pq: List[Tuple[float, str]] = [(0.0, source)]
 
                     while pq:
                         current_cost, current_name = heapq.heappop(pq)
@@ -232,8 +229,8 @@ class PathFinder:
                     if dist[target] == float("inf"):
                         return None, float("inf")
 
-                    path = []
-                    cur = target
+                    path: List[str] = []
+                    cur: Optional[str] = target
 
                     while cur is not None:
                         path.append(cur)
@@ -280,7 +277,9 @@ class PathFinder:
 
         if len(final_paths) > 1:
             print(final_paths)
-            if self.count_path_cost(final_paths[0]) == self.count_path_cost(final_paths[1]):
+            cost0 = self.count_path_cost(final_paths[0])
+            cost1 = self.count_path_cost(final_paths[1])
+            if cost0 == cost1:
                 p1_priorities = self.count_priority_zones(final_paths[0])
                 p2_priorities = self.count_priority_zones(final_paths[1])
                 if p2_priorities > p1_priorities:

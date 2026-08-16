@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Any, Dict
 import re
 
 
@@ -9,7 +10,7 @@ class Connection(BaseModel):
     occupency: int = Field(default=0)
 
     @classmethod
-    def validate_connection(cls, value):
+    def validate_connection(cls, value: str) -> Dict[str, Any]:
         pattern = (
             r"^(?P<zone1>\w+)\s*-\s*"
             r"(?P<zone2>\w+)(?:\s*\[(?P<options>.*?)\])?$"
@@ -21,7 +22,7 @@ class Connection(BaseModel):
         zone2 = match.group('zone2')
         options_str = match.group('options')
 
-        options_dict = {}
+        options_dict: Dict[str, str] = {}
         if options_str:
             pairs = re.findall(r'(\w+)\s*=\s*([^\s\]]+)', options_str)
             remaining = re.sub(r"\w+\s*=\s*[^\s\]]+", "", options_str)
@@ -39,7 +40,7 @@ class Connection(BaseModel):
                     f"Unknown metadata key '{key}' in connection."
                     f" Only 'max_link_capacity' allowed.")
 
-        max_cap = options_dict.get('max_link_capacity', 1)
+        max_cap = options_dict.get('max_link_capacity', '1')
         try:
             max_cap_int = int(max_cap)
         except ValueError:

@@ -9,6 +9,9 @@ class Simulation:
     def __init__(self, graph: GraphBuilder, nb_drones: int) -> None:
         self.graph: GraphBuilder = graph
         self.nb_drones: int = nb_drones
+        assert graph.data is not None
+        assert graph.data.start_hub is not None
+        assert graph.data.end_hub is not None
         self.start: str = graph.data.start_hub["name"]
         self.end: str = graph.data.end_hub["name"]
         self.zones: Dict[str, Any] = graph.zones_dict
@@ -33,11 +36,14 @@ class Simulation:
             self.drones.append(drone)
 
     def _all_delivered(self) -> bool:
+        """return True if all zones delivered"""
         return all(d.state == "delivered" for d in self.drones)
 
     def _get_connection(
         self, curr_zone: str, next_zone: str
     ) -> Optional[Dict[str, Any]]:
+
+        assert self.graph.data is not None
         for conn in self.graph.data.connections:
             if (
                 conn["zone1"] == curr_zone
@@ -46,7 +52,7 @@ class Simulation:
                 conn["zone1"] == next_zone
                 and conn["zone2"] == curr_zone
             ):
-                return conn
+                return dict(conn)
         return None
 
     def _zone_available_space(self) -> Dict[str, int]:
@@ -65,6 +71,10 @@ class Simulation:
         return avail
 
     def step(self) -> bool:
+        """
+        the simulation function return
+        true if the simulation completed
+        """
         if self._all_delivered():
             return True
 
@@ -114,7 +124,7 @@ class Simulation:
             if drone.id not in self.zone_occupancy[from_z]:
                 continue
 
-            conn_key = tuple(sorted([from_z, to_z]))
+            conn_key: Tuple[str, str] = (min(from_z, to_z), max(from_z, to_z))
 
             if (
                 accepted_connections[conn_key]
@@ -162,6 +172,7 @@ class Simulation:
 
         for drone in arriving_drones:
             to_zone = drone.target_zone
+            assert to_zone is not None
 
             turn_moves.append(f"D{drone.id}-{to_zone}")
             self.zone_occupancy[to_zone].append(drone.id)

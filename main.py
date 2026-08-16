@@ -19,6 +19,9 @@ g.build()
 g.add_zone_neighbors()
 # g.add_costs()
 
+assert g.data is not None
+assert g.data.start_hub is not None
+assert g.data.end_hub is not None
 start = g.data.start_hub["name"]
 end = g.data.end_hub["name"]
 
