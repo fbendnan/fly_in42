@@ -12,7 +12,7 @@ class Zone(BaseModel):
     )
     max_drones: int = Field(default=1)
     color: Optional[str] = None
-    neighbors: list[any] = Field(default_factory=list)
+    neighbors: list = Field(default_factory=list)
     cost: int = 0
 
     @classmethod

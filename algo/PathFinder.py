@@ -1,27 +1,45 @@
 import heapq
 from typing import List, Optional, Tuple, Set, Dict
-from helpers.graph import GraphBuilder
+# from helpers.graph import GraphBuilder
 
 
 class PathFinder:
-    def __init__(self, graph: GraphBuilder) -> None:
-        self.graph: GraphBuilder = graph
+    def __init__(self, graph) -> None:
+        self.graph = graph
         self.paths: List[List[str]] = []
         self.blocked_edges: Set[Tuple[str, str]] = set()
 
     def count_path_cost(self, path: List[str]) -> float:
         """Total cost of a path (sum of movement costs to enter each zone)."""
         if len(path) <= 1:
-            return 0.0
+            return 0
 
-        total: float = 0.0
+        total: float = 0
         for i in range(1, len(path)):
             zone_name = path[i]
             zone = self.graph.zones_dict[zone_name]
             if zone["zone"] == "restricted":
-                total += 2.0
+                total += 2
             else:
-                total += 1.0
+                total += 1
+
+        return total
+    
+    def count_priority_zones(self, path: List[str]) -> int:
+        """Total cost of a path (sum of movement costs to enter each zone)."""
+        if len(path) <= 1:
+            return 0
+
+        total: int = 0
+        for i in range(1, len(path)):
+            zone_name = path[i]
+            print(zone_name)
+            print(self.graph.zones_dict)
+            zone = self.graph.zones_dict[zone_name]
+            if zone["zone"] == 'priority':
+                total += 1
+        return total
+            
 
         return total
 
@@ -55,8 +73,8 @@ class PathFinder:
                 name: None
                 for name in self.graph.zones_dict
             }
-            dist[source] = 0.0
-            pq: List[Tuple[float, str]] = [(0.0, source)]
+            dist[source] = 0
+            pq: List[Tuple[float, str]] = [(0, source)]
 
             while pq:
                 current_cost, current_name = heapq.heappop(pq)
@@ -80,11 +98,11 @@ class PathFinder:
                         continue
 
                     if neighbor_zone["zone"] == "restricted":
-                        move_cost = 2.0
+                        move_cost = 2
                     elif neighbor_zone["zone"] == "priority":
-                        move_cost = 0.9
+                        move_cost = 1
                     else:
-                        move_cost = 1.0
+                        move_cost = 1
 
                     new_cost = current_cost + move_cost
 
@@ -261,5 +279,13 @@ class PathFinder:
                 candidate_paths
             )
             final_paths.append(best_path)
+
+        if len(final_paths) > 1:
+            print(final_paths)
+            if self.count_path_cost(final_paths[0]) == self.count_path_cost(final_paths[1]):
+                p1_priorities = self.count_priority_zones(final_paths[0])
+                p2_priorities = self.count_priority_zones(final_paths[1])
+                if p2_priorities > p1_priorities:
+                    final_paths.reverse()
 
         return final_paths
