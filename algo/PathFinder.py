@@ -33,8 +33,6 @@ class PathFinder:
         total: int = 0
         for i in range(1, len(path)):
             zone_name = path[i]
-            print(zone_name)
-            print(self.graph.zones_dict)
             zone = self.graph.zones_dict[zone_name]
             if zone["zone"] == 'priority':
                 total += 1

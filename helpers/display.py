@@ -8,10 +8,10 @@ from helpers.sim import Simulation
 from helpers.dron import Drone
 
 
-SCREEN_WIDTH = 1500
-SCREEN_HEIGHT = 900
+SCREEN_WIDTH = 1900
+SCREEN_HEIGHT = 950
 MARGIN = 80
-ZONE_RADIUS = 40
+ZONE_RADIUS = 32
 DRONE_SIZE = 20
 
 COLOR_MAP: Dict[str, Tuple[int, int, int]] = {
@@ -30,7 +30,7 @@ COLOR_MAP: Dict[str, Tuple[int, int, int]] = {
     "magenta": (200, 0, 200),
     "gold": (200, 170, 0),
 }
-DEFAULT_ZONE_COLOR: Tuple[int, int, int] = (180, 180, 180)
+DEFAULT_ZONE_COLOR: Tuple[int, int, int] = (100, 100, 100)
 
 
 class Display:
@@ -162,7 +162,7 @@ class Display:
             cap_text = self.font_small.render(
                 f"max:{zone['max_drones']}",
                 True,
-                (80, 80, 80),
+                (255, 255, 255),
             )
             cap_rect = cap_text.get_rect(
                 center=(cx, cy + ZONE_RADIUS - 12)
@@ -252,7 +252,7 @@ class Display:
     def goo(self, delay_ms: int = 4000) -> None:
         pygame.init()
 
-        self.font_zone = pygame.font.Font(None, 20)
+        self.font_zone = pygame.font.Font(None, 15)
         self.font_small = pygame.font.Font(None, 14)
 
         screen = pygame.display.set_mode(
