@@ -8,8 +8,8 @@ from helpers.sim import Simulation
 from helpers.dron import Drone
 
 
-SCREEN_WIDTH = 1900
-SCREEN_HEIGHT = 950
+SCREEN_WIDTH = 1000
+SCREEN_HEIGHT = 600
 MARGIN = 80
 ZONE_RADIUS = 32
 DRONE_SIZE = 20

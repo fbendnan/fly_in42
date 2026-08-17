@@ -1,0 +1,35 @@
+from parse.parsing import ParseConfig
+from algo.PathFinder import PathFinder
+from helpers.dron import Drone
+
+class GraphBuilder:
+    def __init__(self, file_name):
+        self.data = None
+        self.zones_dict = {}
+        self.file_name = file_name
+        self.drones = []
+
+    def build(self):
+        self.data = ParseConfig(self.file_name)
+        self.data.parser()
+        self.zones_dict[self.data.start_hub.name] = self.data.start_hub
+        self.zones_dict[self.data.end_hub.name] = self.data.end_hub
+        for hub in self.data.hubs:
+            self.zones_dict[hub.name] = hub
+
+    def add_zone_neighbors(self):
+        for conn in self.data.connections:
+            z1 = self.zones_dict[conn.zone1]
+            z2 = self.zones_dict[conn.zone2]
+
+            z1.neighbors.append((z2, conn))
+            z2.neighbors.append((z1, conn))
+
+    def add_costs(self):
+        for key, zone in self.zones_dict.items():
+            if zone.zone == 'blocked':
+                continue
+            if zone.zone == 'restricted':
+                zone.cost = 2
+            else:
+                zone.cost = 1
